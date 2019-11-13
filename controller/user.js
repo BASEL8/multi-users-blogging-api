@@ -5,13 +5,10 @@ const formidable = require('formidable')
 const fs = require('fs')
 const { errorHandler } = require('../helpers/dbErrorHandler')
 const { validationResult } = require('express-validator');
-
-
 exports.read = (req, res) => {
   req.profile.hashed_password = undefined;
   return res.json(req.profile)
 }
-
 exports.publicProfile = (req, res) => {
   let username = req.params.username;
   let user;
@@ -39,7 +36,6 @@ exports.publicProfile = (req, res) => {
         res.status(200).json({ user, blogs })
       })
   })
-
 }
 exports.updateProfile = (req, res) => {
   let form = new formidable.IncomingForm;
@@ -104,7 +100,7 @@ exports.deleteMyProfile = (req, res) => {
       if (err) {
         return res.json({ error: err })
       }
-      User.deleteOne({ _id }, (err, data) => {
+      User.remove({ _id }, (err, data) => {
         if (err) {
           return res.status(400).json({
             error: errorHandler(err),
@@ -116,6 +112,39 @@ exports.deleteMyProfile = (req, res) => {
         })
       })
     })
-
-
+}
+exports.getAllUsers = (req, res) => {
+  console.log(req.profile)
+  const { _id } = req.profile
+  User.find({ _id: { $ne: _id } })
+    .select('_id name email profile role username createdAt')
+    .exec((err, users) => {
+      if (err) {
+        return res.status(400).json({
+          error: errorHandler(err)
+        })
+      }
+      return res.json(users)
+    })
+}
+exports.AdminRemoveUser = (req, res) => {
+  const { userId } = req.params
+  console.log(userId)
+  Blog.remove({ postedBy: userId })
+    .exec((err, data) => {
+      if (err) {
+        return res.json({ error: err })
+      }
+      User.remove({ _id: userId }, (err, data) => {
+        if (err) {
+          return res.status(400).json({
+            error: errorHandler(err),
+            deleted: false
+          })
+        }
+        res.json({
+          deleted: true
+        })
+      })
+    })
 }

@@ -10,6 +10,7 @@ const fs = require('fs')
 const { smartTrim } = require('../helpers/blog')
 
 exports.create = (req, res) => {
+  //check
   let form = new formidable.IncomingForm();
   form.keepExtensions = true;
   form.parse(req, (err, fields, files) => {
@@ -72,7 +73,6 @@ exports.create = (req, res) => {
     })
 
   })
-
 }
 exports.list = (req, res) => {
   Blog.find({})
