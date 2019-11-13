@@ -1,6 +1,7 @@
 const Blog = require('../models/blog')
 const Category = require('../models/category')
 const Tag = require('../models/tag')
+const User = require('../models/user')
 const formidable = require('formidable')
 const slugify = require('slugify')
 const stripHtml = require('string-strip-html')
@@ -11,71 +12,80 @@ const { smartTrim } = require('../helpers/blog')
 
 exports.create = (req, res) => {
   //check
-  let form = new formidable.IncomingForm();
-  form.keepExtensions = true;
-  form.parse(req, (err, fields, files) => {
-    console.log(fields)
+  const { _id } = req.user
+  User.findOne({ _id }).exec((err, user) => {
+    if (err || !user) {
+      console.log('error', err)
+      return res.status(401).json({
+        error: 'user no longer exist'
+      })
+    }
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
+    form.parse(req, (err, fields, files) => {
+      console.log(req.user)
 
-    if (err) {
-      return res.status(400).json({ error: 'image could not be upload' })
-    }
-    const { title, body, categories, tags } = fields;
-    if (!title || !title.length) {
-      return res.status(400).json({ error: 'title is required' })
-    }
-    if (title.length < 4) {
-      return res.status(400).json({ error: 'title is short' })
-    }
-    if (!body || body.length < 200) {
-      return res.status(400).json({ error: 'content is short' })
-    }
-    if (!categories || categories.length === 0) {
-      return res.status(400).json({ error: 'att lest one category is required' })
-    }
-    if (!tags || tags.length === 0) {
-      return res.status(400).json({ error: 'att lest one tag is required' })
-    }
-    let blog = new Blog();
-    blog.title = title;
-    blog.body = body;
-    blog.excerpt = smartTrim(stripHtml(body), 200, ' ', ' ...');
-    blog.slug = slugify(title).toLowerCase();
-    blog.metaTitle = `${title} | ${process.env.APP_NAME}`;
-    blog.metaDescription = stripHtml(body.substring(0, 160));
-    blog.postedBy = req.user._id;
-
-    let arrayOfCategories = categories && categories.split(',')
-    let arrayOfTags = tags && tags.split(',')
-
-    if (files.photo) {
-      if (files.photo.size > 10000000) {
-        return res.status(400).json({ error: 'image could not be upload,try with size less than 1 mb' })
-      }
-      blog.photo.data = fs.readFileSync(files.photo.path);
-      blog.photo.type = files.photo.type
-    }
-    blog.save((err, data) => {
       if (err) {
-        return res.status(400).json({ error: errorHandler(err) })
+        return res.status(400).json({ error: 'image could not be upload' })
       }
-      //res.json(data)
-      Blog.findByIdAndUpdate(data._id, { $push: { categories: arrayOfCategories } }, { new: true }).exec((err, data) => {
+      const { title, body, categories, tags } = fields;
+      if (!title || !title.length) {
+        return res.status(400).json({ error: 'title is required' })
+      }
+      if (title.length < 4) {
+        return res.status(400).json({ error: 'title is short' })
+      }
+      if (!body || body.length < 200) {
+        return res.status(400).json({ error: 'content is short' })
+      }
+      if (!categories || categories.length === 0) {
+        return res.status(400).json({ error: 'att lest one category is required' })
+      }
+      if (!tags || tags.length === 0) {
+        return res.status(400).json({ error: 'att lest one tag is required' })
+      }
+      let blog = new Blog();
+      blog.title = title;
+      blog.body = body;
+      blog.excerpt = smartTrim(stripHtml(body), 200, ' ', ' ...');
+      blog.slug = slugify(title).toLowerCase();
+      blog.metaTitle = `${title} | ${process.env.APP_NAME}`;
+      blog.metaDescription = stripHtml(body.substring(0, 160));
+      blog.postedBy = req.user._id;
+      let arrayOfCategories = categories && categories.split(',')
+      let arrayOfTags = tags && tags.split(',')
+
+      if (files.photo) {
+        if (files.photo.size > 10000000) {
+          return res.status(400).json({ error: 'image could not be upload,try with size less than 1 mb' })
+        }
+        blog.photo.data = fs.readFileSync(files.photo.path);
+        blog.photo.type = files.photo.type
+      }
+      blog.save((err, data) => {
         if (err) {
           return res.status(400).json({ error: errorHandler(err) })
         }
-        Blog.findByIdAndUpdate(data._id, { $push: { tags: arrayOfTags } }, { new: true }).exec((err, data) => {
+        Blog.findByIdAndUpdate(data._id, { $push: { categories: arrayOfCategories } }, { new: true }).exec((err, data) => {
           if (err) {
             return res.status(400).json({ error: errorHandler(err) })
           }
-          res.json(data)
+          Blog.findByIdAndUpdate(data._id, { $push: { tags: arrayOfTags } }, { new: true }).exec((err, data) => {
+            if (err) {
+              return res.status(400).json({ error: errorHandler(err) })
+            }
+            res.json(data)
+          })
         })
       })
-    })
 
+    })
   })
+
 }
 exports.list = (req, res) => {
-  Blog.find({})
+  console.log('request done')
+  Blog.find({ postedBy: { $ne: null } })
     .populate('categories', '_id name slug')
     .populate('tags', '_id name slug')
     .populate('postedBy', '_id name username')
@@ -84,13 +94,13 @@ exports.list = (req, res) => {
       if (err) {
         return res.json({ error: err })
       }
+      console.log(data[0])
       res.json(data)
     })
 
 }
 
 exports.listUserPlogs = (req, res) => {
-  console.log(req.body)
   const { _id } = req.body
   Blog.find({ postedBy: { $eq: _id } })
     .populate('categories', '_id name slug')
@@ -106,7 +116,6 @@ exports.listUserPlogs = (req, res) => {
 
 }
 exports.listAllBlogsCategoriesTgs = (req, res) => {
-  console.log(req)
   let limit = req.body.limit ? parseInt(req.body.limit) : 10;
   let skip = req.body.skip ? parseInt(req.body.skip) : 0;
   let blogs;
@@ -302,11 +311,10 @@ exports.listRelated = (req, res) => {
 
 exports.listSearch = (req, res) => {
   const { value } = req.query
-  console.log(req.query)
   if (value) {
     Blog.find({ $or: [{ title: { $regex: value, $options: 'i' } }, { body: { $regex: value, $options: 'i' } }] }, (err, blogs) => {
       if (err) {
-        return status(400).json({
+        return res.status(400).json({
           error: errorHandler(err)
         })
       }

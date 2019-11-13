@@ -114,7 +114,6 @@ exports.deleteMyProfile = (req, res) => {
     })
 }
 exports.getAllUsers = (req, res) => {
-  console.log(req.profile)
   const { _id } = req.profile
   User.find({ _id: { $ne: _id } })
     .select('_id name email profile role username createdAt')
@@ -129,7 +128,6 @@ exports.getAllUsers = (req, res) => {
 }
 exports.AdminRemoveUser = (req, res) => {
   const { userId } = req.params
-  console.log(userId)
   Blog.remove({ postedBy: userId })
     .exec((err, data) => {
       if (err) {

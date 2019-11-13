@@ -73,7 +73,6 @@ exports.signup = (req, res) => {
 
 }
 exports.signin = (req, res) => {
-  console.log(req.body)
   const { email, password } = req.body
   //check if user exist
   User.findOne({ email }).exec((err, user) => {
@@ -140,7 +139,6 @@ exports.adminMiddleware = (req, res, next) => {
 }
 exports.forgetPassword = (req, res) => {
   const { email } = req.body;
-  console.log(email)
   User.findOne({ email }, (err, user) => {
     if (err || !user) {
       return res.status(401).json({
@@ -202,7 +200,6 @@ exports.resetPassword = (req, res) => {
                   error: errorHandler(err)
                 })
               }
-              console.log(user)
               res.json({
                 email: user.email,
                 message: 'now you can login with your new password'
@@ -242,7 +239,6 @@ exports.googleSignin = (req, res) => {
           let password = jti;
           user = new User({ name, email, password, profile, username })
           user.save((err, data) => {
-            console.log(data)
             if (err) {
               return res.status(400).json({
                 error: errorHandler(err)

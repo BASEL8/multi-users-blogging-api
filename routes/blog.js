@@ -4,7 +4,7 @@ const { create, list, listAllBlogsCategoriesTgs, read, adminRemoveBlog, userRemo
 const { requiresignin, authMiddleware, adminMiddleware } = require('../controller/auth')
 
 router.post('/blog', requiresignin, create)
-router.post('/blogs', requiresignin, adminMiddleware, list)
+router.get('/blogs', requiresignin, adminMiddleware, list)
 router.post('/user/blogs', requiresignin, listUserPlogs)
 router.post('/blogs-categories-tags', listAllBlogsCategoriesTgs)
 router.get('/blog/:slug', requiresignin, read)

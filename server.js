@@ -26,6 +26,7 @@ app.use(cookieParser());
 if (process.env.NODE_ENV === 'development') {
   app.use(cors({ origin: `${process.env.CLIENT_URL}` }));
 }
+
 //routes middleware 
 app.use('/api', blogRoutes)
 app.use('/api', authRoutes)
