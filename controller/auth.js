@@ -31,7 +31,7 @@ exports.preSignup = (req, res) => {
 
     sgMail.send(emailData).then(sent => {
       return res.json({
-        message: `activation link has been sent to ${email}`
+        success: `activation link has been sent to ${email}`
       })
     })
   })
@@ -51,13 +51,15 @@ exports.signup = (req, res) => {
         let username = shortId.generate();
         let profile = `${process.env.CLIENT_URL}/profile/${username}`;
         let newUser = new User({ name, email, password, profile, username });
-        newUser.save((err, success) => {
+        newUser.save((err, user) => {
           if (err) {
             return res.status(400).json({
-              error: err
+              error: errorHandler(err)
             })
           }
-          res.json({ message: 'Signup success! please signin' })
+          const name = user.name;
+          const email = user.email
+          res.json({ success: 'Signup success! please login', name, email })
         })
 
       }
@@ -137,42 +139,43 @@ exports.adminMiddleware = (req, res, next) => {
   })
 }
 exports.forgetPassword = (req, res) => {
-  console.log(req.body)
   const { email } = req.body;
+  console.log(email)
   User.findOne({ email }, (err, user) => {
-    if (err) {
+    if (err || !user) {
       return res.status(401).json({
         error: 'user with this email dose not found'
       })
-    }
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_resetPassword_SECRET, { expiresIn: '10m' })
-    //send email 
-    const emailData = {
-      to: email,
-      from: process.env.EMAIL_FROM,
-      subject: `Password reset link`,
-      html: `
+    } else if (user) {
+      const token = jwt.sign({ _id: user._id }, process.env.JWT_resetPassword_SECRET, { expiresIn: '10m' })
+      //send email 
+      const emailData = {
+        to: email,
+        from: process.env.EMAIL_FROM,
+        subject: `Password reset link`,
+        html: `
     <h4>please use this link to reset your password<h4> 
     <a href="${process.env.CLIENT_URL}/auth/password/reset/${token}">reset-link</a>
     `
-    }
-    return user.updateOne({ resetPassword: token }, (err, success) => {
-      if (err) {
-        return res.json({
-          error: err
-        })
       }
-      sgMail.send(emailData).then(sent => {
-        return res.json({
-          message: `Email has been sent to ${email}, follow the instruction to reset your password, the link expire in 10 min`
+      return user.updateOne({ resetPassword: token }, (err, success) => {
+        if (err) {
+          return res.json({
+            error: err
+          })
+        }
+        sgMail.send(emailData).then(sent => {
+          return res.json({
+            message: `Email has been sent to ${email}, follow the instruction to reset your password, the link expire in 10 min`
+          })
         })
       })
-    })
+    }
+
   })
 
 }
 exports.resetPassword = (req, res) => {
-  console.log(req.body)
   const { resetPasswordLink, newPassword } = req.body;
   if (resetPasswordLink) {
     jwt.verify(resetPasswordLink, process.env.JWT_resetPassword_SECRET, function (err, decoded) {
@@ -199,7 +202,9 @@ exports.resetPassword = (req, res) => {
                   error: errorHandler(err)
                 })
               }
+              console.log(user)
               res.json({
+                email: user.email,
                 message: 'now you can login with your new password'
               })
             })

@@ -106,6 +106,7 @@ exports.listUserPlogs = (req, res) => {
 
 }
 exports.listAllBlogsCategoriesTgs = (req, res) => {
+  console.log(req)
   let limit = req.body.limit ? parseInt(req.body.limit) : 10;
   let skip = req.body.skip ? parseInt(req.body.skip) : 0;
   let blogs;

@@ -97,3 +97,26 @@ exports.photo = (req, res) => {
     }
   })
 }
+exports.deleteMyProfile = (req, res) => {
+  const { _id } = req.body
+
+  Blog.remove({ postedBy: _id })
+    .exec((err, data) => {
+      if (err) {
+        return res.json({ error: err })
+      }
+      User.findByIdAndRemove({ _id }, (err, data) => {
+        if (err) {
+          return res.status(400).json({
+            error: errorHandler(err),
+            deleted: false
+          })
+        }
+        res.json({
+          deleted: true
+        })
+      })
+    })
+
+
+}
