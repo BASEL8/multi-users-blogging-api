@@ -23,12 +23,13 @@ exports.create = (req, res) => {
     let form = new formidable.IncomingForm();
     form.keepExtensions = true;
     form.parse(req, (err, fields, files) => {
-      console.log(req.user)
 
       if (err) {
         return res.status(400).json({ error: 'image could not be upload' })
       }
-      const { title, body, categories, tags } = fields;
+      const { title, body, categories, tags, timeToRead } = fields;
+      console.log(fields)
+
       if (!title || !title.length) {
         return res.status(400).json({ error: 'title is required' })
       }
@@ -47,6 +48,7 @@ exports.create = (req, res) => {
       let blog = new Blog();
       blog.title = title;
       blog.body = body;
+      blog.timeToRead = timeToRead;
       blog.excerpt = smartTrim(stripHtml(body), 200, ' ', ' ...');
       blog.slug = slugify(title).toLowerCase();
       blog.metaTitle = `${title} | ${process.env.APP_NAME}`;
@@ -78,7 +80,6 @@ exports.create = (req, res) => {
           })
         })
       })
-
     })
   })
 
@@ -89,7 +90,7 @@ exports.list = (req, res) => {
     .populate('categories', '_id name slug')
     .populate('tags', '_id name slug')
     .populate('postedBy', '_id name username')
-    .select('_id title slug excerpt categories tags postedBy createdAt updatedAt photo')
+    .select('_id title slug excerpt categories tags postedBy createdAt updatedAt photo timeToRead')
     .exec((err, data) => {
       if (err) {
         return res.json({ error: err })
@@ -106,7 +107,7 @@ exports.listUserPlogs = (req, res) => {
     .populate('categories', '_id name slug')
     .populate('tags', '_id name slug')
     .populate('postedBy', '_id name username')
-    .select('_id title slug excerpt categories tags postedBy createdAt updatedAt photo')
+    .select('_id title slug excerpt categories tags postedBy createdAt updatedAt photo timeToRead')
     .exec((err, data) => {
       if (err) {
         return res.json({ error: err })
@@ -158,7 +159,7 @@ exports.read = (req, res) => {
     .populate('categories', '_id name slug')
     .populate('tags', '_id name slug')
     .populate('postedBy', '_id name username photo')
-    .select('_id title slug body metaTitle metaDescription categories tags postedBy createdAt updatedAt photo')
+    .select('_id title slug body metaTitle metaDescription categories tags postedBy createdAt updatedAt photo timeToRead')
     .exec((err, data) => {
       if (err) {
         return res.json({ error: err })
@@ -173,7 +174,7 @@ exports.readPart = (req, res) => {
     .populate('categories', '_id name slug')
     .populate('tags', '_id name slug')
     .populate('postedBy', '_id name username photo')
-    .select('_id title slug excerpt  metaTitle metaDescription categories tags postedBy createdAt updatedAt photo')
+    .select('_id title slug excerpt  metaTitle metaDescription categories tags postedBy createdAt updatedAt photo timeToRead')
     .exec((err, data) => {
       if (err) {
         return res.json({ error: err })
@@ -294,7 +295,7 @@ exports.listRelated = (req, res) => {
     .populate('categories', '_id name slug')
     .populate('tags', '_id name slug')
     .populate('postedBy', '_id name profile')
-    .select('title slug excerpt postedBy tags categories createdAt updatedAt')
+    .select('title slug excerpt postedBy tags categories createdAt updatedAt timeToRead')
     .exec((err, blogs) => {
       if (err) {
         return res.status(400).json({

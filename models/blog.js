@@ -41,6 +41,10 @@ const blogSchema = new mongoose.Schema({
     type: ObjectId,
     ref: 'User'
   },
+  timeToRead: {
+    type: String,
+    default: '0'
+  },
   claps: {
     type: Number,
     default: 10

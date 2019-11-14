@@ -19,6 +19,7 @@ exports.publicProfile = (req, res) => {
         error: 'user not found'
       })
     }
+    console.log(data)
     user = data;
     let userId = user._id
     Blog.find({ postedBy: userId })
