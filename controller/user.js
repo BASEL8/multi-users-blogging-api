@@ -3,6 +3,7 @@ const Blog = require('../models/blog')
 const _ = require('lodash')
 const formidable = require('formidable')
 const fs = require('fs')
+var text2png = require('text2png');
 const { errorHandler } = require('../helpers/dbErrorHandler')
 const { validationResult } = require('express-validator');
 exports.read = (req, res) => {
@@ -58,9 +59,14 @@ exports.updateProfile = (req, res) => {
           error: 'image should be less than 1mb'
         })
       }
-
       user.photo.data = fs.readFileSync(files.photo.path)
       user.photo.contentType = files.photo.type;
+    } else {
+      console.log(!user.photo.data)
+      if (!user.photo.data) {
+        let photo = text2png(user.name[0].toUpperCase(), { color: 'black', textAlign: 'center', lineSpacing: 10, padding: 20 });
+        user.photo.data = photo
+      }
     }
     if (files.password && files.password.length < 6) {
 

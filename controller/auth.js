@@ -7,6 +7,7 @@ const _ = require('lodash')
 const { OAuth2Client } = require('google-auth-library')
 const sgMail = require('@sendgrid/mail')
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+var text2png = require('text2png');
 
 
 
@@ -50,7 +51,9 @@ exports.signup = (req, res) => {
         const { email, password, name } = decoded
         let username = shortId.generate();
         let profile = `${process.env.CLIENT_URL}/profile/${username}`;
-        let newUser = new User({ name, email, password, profile, username });
+        let photo = {}
+        photo.data = text2png(name[0].toUpperCase(), { color: 'black', textAlign: 'center', lineSpacing: 10, padding: 20 });
+        let newUser = new User({ name, email, password, profile, username, photo });
         newUser.save((err, user) => {
           if (err) {
             return res.status(400).json({

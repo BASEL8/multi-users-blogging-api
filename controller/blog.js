@@ -8,6 +8,7 @@ const stripHtml = require('string-strip-html')
 const _ = require('lodash')
 const { errorHandler } = require('../helpers/dbErrorHandler')
 const fs = require('fs')
+var text2png = require('text2png');
 const { smartTrim } = require('../helpers/blog')
 
 exports.create = (req, res) => {
@@ -28,8 +29,6 @@ exports.create = (req, res) => {
         return res.status(400).json({ error: 'image could not be upload' })
       }
       const { title, body, categories, tags, timeToRead } = fields;
-      console.log(fields)
-
       if (!title || !title.length) {
         return res.status(400).json({ error: 'title is required' })
       }
@@ -63,6 +62,10 @@ exports.create = (req, res) => {
         }
         blog.photo.data = fs.readFileSync(files.photo.path);
         blog.photo.type = files.photo.type
+      } else {
+        let photo = text2png(title.match(/\b[\w']+(?:[^\w\n]+[\w']+){0,2}\b/g).join('\n'), { color: 'black', textAlign: 'center', lineSpacing: 10, padding: 20 });
+        blog.photo.data = photo
+
       }
       blog.save((err, data) => {
         if (err) {
@@ -256,6 +259,11 @@ exports.update = (req, res) => {
         }
         oldBlog.photo.data = fs.readFileSync(files.photo.path);
         oldBlog.photo.contentType = files.photo.type;
+      } else {
+        if (!oldBlog.photo.data) {
+          let photo = text2png(oldBlog.title.match(/\b[\w']+(?:[^\w\n]+[\w']+){0,2}\b/g).join('\n'), { color: 'black', textAlign: 'center', lineSpacing: 10, padding: 20 });
+          oldBlog.photo.data = photo
+        }
       }
 
       oldBlog.save((err, result) => {
