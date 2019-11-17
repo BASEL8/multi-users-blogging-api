@@ -15,19 +15,18 @@ exports.publicProfile = (req, res) => {
   let user;
   let blogs;
   User.findOne({ username }).exec((err, data) => {
-    if (err) {
+    if (err || data === null) {
       return res.status(400).json({
         error: 'user not found'
       })
     }
-    console.log(data)
     user = data;
     let userId = user._id
     Blog.find({ postedBy: userId })
       .populate('categories', '_id name slug')
       .populate('tags', '_id name slug')
       .populate('postedBy', '_id name')
-      .select('_id title slug excerpt categories postedBy tags createAt updateAt')
+      .select('_id title slug excerpt categories postedBy tags createAt updateAt photo')
       .exec((err, blogs) => {
         if (err) {
           return res.status(400).json({
@@ -87,6 +86,7 @@ exports.updateProfile = (req, res) => {
   })
 }
 exports.photo = (req, res) => {
+  console.log(req.params)
   const username = req.params.username;
   User.findOne({ username }).exec((err, user) => {
     if (err) {

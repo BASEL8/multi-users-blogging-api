@@ -13,6 +13,7 @@ const userRoutes = require('./routes/user')
 const categoryRoutes = require('./routes/category')
 const contactFormRoutes = require('./routes/form')
 const tagRoutes = require('./routes/tag')
+const adminRoutes = require('./routes/admin')
 const app = express();
 
 //db 
@@ -33,6 +34,7 @@ app.use('/api', authRoutes)
 app.use('/api', userRoutes)
 app.use('/api', categoryRoutes)
 app.use('/api', tagRoutes)
+app.use('/api', adminRoutes)
 app.use('/api', contactFormRoutes)
 
 

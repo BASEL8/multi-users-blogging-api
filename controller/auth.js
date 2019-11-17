@@ -40,6 +40,7 @@ exports.preSignup = (req, res) => {
 exports.signup = (req, res) => {
 
   const { activationToken } = req.body
+  console.log(activationToken)
   if (activationToken) {
     jwt.verify(activationToken, process.env.JWT_ACCOUNT_ACTIVATION_SECRET, function (err, decoded) {
       if (err) {
