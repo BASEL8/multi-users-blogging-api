@@ -300,10 +300,8 @@ exports.listRelated = (req, res) => {
   const { _id, categories } = req.body;
   Blog.find({ _id: { $ne: _id }, categories: { $in: categories } })
     .limit(limit)
-    .populate('categories', '_id name slug')
-    .populate('tags', '_id name slug')
-    .populate('postedBy', '_id name profile')
-    .select('title slug excerpt postedBy tags categories createdAt updatedAt timeToRead')
+    .populate('postedBy', '_id name profile photo')
+    .select('title slug postedBy createdAt timeToRead')
     .exec((err, blogs) => {
       if (err) {
         return res.status(400).json({
